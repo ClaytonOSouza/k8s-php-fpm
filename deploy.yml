@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+  labels:
+    app: php
+  name: php
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php
+  template:
+    metadata:
+      labels:
+        app: php
+    spec:
+      initContainers:
+      - name: cloner
+        image: hectorvido/git
+        imagePullPolicy: Always
+        command: 
+        - sh
+        - -c
+        - "ssh-keyscan -t rsa gitlab.com >> /home/git/.ssh/known_hosts && git clone git@github.com/some.git /site && rm -rf /site/.git"
+        volumeMounts:
+        - name: site
+          mountPath: /site
+        - mountPath: /home/git/.ssh/id_rsa
+          name: git-key
+          subPath: git.key
+      containers:
+      - image: hectorvido/lighttpd-fpm
+        imagePullPolicy: Always
+        name: lighttpd
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: site
+          mountPath: /var/www/htdocs
+      - image: hectorvido/php-fpm
+        imagePullPolicy: Always
+        name: php
+        ports:
+        - containerPort: 9000
+        volumeMounts:
+        - name: site
+          mountPath: /var/www/htdocs
+        - name: php-ini
+          mountPath: /etc/php7/php.ini
+          subPath: php.ini
+        - name: www-conf
+          mountPath: /etc/php7/php-fpm.d/www.conf
+          subPath: www.conf
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsUser: 1000
+      volumes:
+      - name: site
+        emptyDir:
+      - name: git-key
+        secret:
+          defaultMode: 256
+          secretName: git-key
+      - name: php-ini
+        configMap:
+          name: php-ini
+      - name: www-conf
+        configMap:
+          name: www-conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: php
+  name: php
+spec:
+  ports:
+  - port: 8080
+  selector:
+    app: php
