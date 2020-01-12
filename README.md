@@ -26,5 +26,5 @@ O **lighttpd** é um contêiner baseado em alpine com uma instalação mínima d
 
 ## PHP
 
-O **php** é um contêiner baseado em alpine com uma instalação mínima do php-fpm e algumas dependências em comun das minhas aplicações. O processo também utiliza o volume compartilhado.
+O **php** é um contêiner baseado em alpine com uma instalação mínima do php-fpm e algumas dependências em comum das minhas aplicações. O processo também utiliza o volume compartilhado.
 Além do volume, este contêiner possui dois **ConfigMap** montados dentro de sí, um deles para o *php.ini* e outro para o **pool** do **php-fpm** chamado *www.conf*.
